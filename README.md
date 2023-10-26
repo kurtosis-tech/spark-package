@@ -1,6 +1,6 @@
 My Package
 ============
-This is a [Kurtosis](https://github.com/kurtosis-tech/kurtosis/) package. It doesn't do much now, but it will soon!
+This is a spark-py kurtosis package.
 
 Run this package
 ----------------
@@ -8,7 +8,7 @@ If you have [Kurtosis installed][install-kurtosis], run:
 
 <!-- TODO replace YOURUSER and THISREPO with the correct values -->
 ```bash
-kurtosis run github.com/YOURUSER/THISREPO
+kurtosis run github.com/kurtosis-tech/spark-py-package
 ```
 
 If you don't have Kurtosis installed, [click here to run this package on the Kurtosis playground](https://gitpod.io/?autoStart=true&editor=code#https://github.com/kurtosis-tech/playground-gitpod).
@@ -38,14 +38,14 @@ For example:
 
 <!-- TODO replace YOURUSER and THISREPO with the correct values -->
 ```bash
-kurtosis run github.com/YOURUSER/THISREPO '{"name":"Maynard James Keenan"}'
+kurtosis run github.com/kurtosis-tech/spark-py-package '{"name":"Maynard James Keenan"}'
 ```
 
 You can also store the JSON args in a file, and use command expansion to slot them in:
 
 <!-- TODO replace YOURUSER and THISREPO with the correct values -->
 ```bash
-kurtosis run github.com/YOURUSER/THISREPO "$(cat args.json)"
+kurtosis run github.com/kurtosis-tech/spark-py-package "$(cat args.json)"
 ```
 
 </details>
@@ -58,7 +58,7 @@ Kurtosis packages can be composed inside other Kurtosis packages. To use this pa
 First, import this package by adding the following to the top of your Starlark file:
 
 ```python
-this_package = import_module("github.com/YOURUSER/THISREPO/main.star")
+this_package = import_module("github.com/kurtosis-tech/spark-py-package/main.star")
 ```
 
 Then, call the this package's `run` function somewhere in your Starlark script:

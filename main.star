@@ -3,6 +3,7 @@ SPARK_WORKER_SERVICE_NAME_PREFIX = "spark-worker"
 SPARK_IMAGE = "bitnami/spark:latest"
 SPARK_CMD = "./sbin/start-master.sh"
 
+SPARK_REST_API_PORT_NUMBER = 6066
 SPARK_WEB_UI_PORT_NUMBER = 8080
 SPARK_MASTER_PORT_NUMBER = 7077
 NUM_WORKERS = 1
@@ -28,9 +29,15 @@ def create_spark_master(plan):
                 transport_protocol="TCP",
                 application_protocol="http",
             ),
+            "rest-api": PortSpec(
+                number=SPARK_REST_API_PORT_NUMBER,
+                transport_protocol="TCP",
+                application_protocol="http",
+            ),
         },
         env_vars={
             "SPARK_MODE": "master",
+            "SPARK_MASTER_OPTS": "-Dspark.master.rest.enabled=true",
             "SPARK_RPC_AUTHENTICATION_ENABLED": "no",
             "SPARK_RPC_ENCRYPTION_ENABLED": "no",
             "SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED": "no",

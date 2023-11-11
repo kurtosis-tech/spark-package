@@ -1,23 +1,68 @@
-# NOTE: If you're a VSCode user, you might like our VSCode extension: https://marketplace.visualstudio.com/items?itemName=Kurtosis.kurtosis-extension
+SPARK_MASTER_SERVICE_NAME = "spark-master"
+SPARK_WORKER_SERVICE_NAME_PREFIX = "spark-worker"
+SPARK_IMAGE = "bitnami/spark:latest"
+SPARK_CMD = "./sbin/start-master.sh"
 
-# Importing the Postgres package from the web using absolute import syntax
-# See also: https://docs.kurtosis.com/starlark-reference/import-module
-postgres = import_module("github.com/kurtosis-tech/postgres-package/main.star")
+SPARK_REST_API_PORT_NUMBER = 6066
+SPARK_WEB_UI_PORT_NUMBER = 8080
+SPARK_MASTER_PORT_NUMBER = 7077
+NUM_WORKERS = 1
 
-# Importing a file inside this package using relative import syntax
-# See also: https://docs.kurtosis.com/starlark-reference/import-module
-lib = import_module("./lib/lib.star")
 
-# For more information on...
-#  - the 'run' function:  https://docs.kurtosis.com/concepts-reference/packages#runnable-packages
-#  - the 'plan' object:   https://docs.kurtosis.com/starlark-reference/plan
-#  - arguments:           https://docs.kurtosis.com/run#arguments
-def run(plan, name = "John Snow"):
-    plan.print("Hello, " + name)
+def run(plan, args={}):
+    create_spark_master(plan)
+    for idx in range(1, NUM_WORKERS + 1):
+        create_spark_worker(plan, SPARK_MASTER_PORT_NUMBER, idx)
 
-    # https://docs.kurtosis.com/starlark-reference/plan#upload_files
-    config_json = plan.upload_files("./static-files/config.json")
 
-    lib.run_hello(plan, config_json)
+def create_spark_master(plan):
+    config = ServiceConfig(
+        image=SPARK_IMAGE,
+        ports={
+            "web-ui": PortSpec(
+                number=SPARK_WEB_UI_PORT_NUMBER,
+                transport_protocol="TCP",
+                application_protocol="http",
+            ),
+            "master": PortSpec(
+                number=SPARK_MASTER_PORT_NUMBER,
+                transport_protocol="TCP",
+                application_protocol="http",
+            ),
+            "rest-api": PortSpec(
+                number=SPARK_REST_API_PORT_NUMBER,
+                transport_protocol="TCP",
+                application_protocol="http",
+            ),
+        },
+        env_vars={
+            "SPARK_MODE": "master",
+            "SPARK_MASTER_OPTS": "-Dspark.master.rest.enabled=true",
+            "SPARK_RPC_AUTHENTICATION_ENABLED": "no",
+            "SPARK_RPC_ENCRYPTION_ENABLED": "no",
+            "SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED": "no",
+            "SPARK_SSL_ENABLED": "no",
+            "SPARK_USER": "spark",
+        },
+    )
+    plan.add_service(name=SPARK_MASTER_SERVICE_NAME, config=config)
 
-    postgres.run(plan)
+
+def create_spark_worker(plan, master_port, idx):
+    spark_worker_name = "%s-%d" % (SPARK_WORKER_SERVICE_NAME_PREFIX, idx)
+    spark_master_url = "spark://%s:%d" % (SPARK_MASTER_SERVICE_NAME, master_port)
+    config = ServiceConfig(
+        image=SPARK_IMAGE,
+        env_vars={
+            "SPARK_MODE": "worker",
+            "SPARK_MASTER_URL": spark_master_url,
+            "SPARK_WORKER_MEMORY": "1G",
+            "SPARK_WORKER_CORES": "1",
+            "SPARK_RPC_AUTHENTICATION_ENABLED": "no",
+            "SPARK_RPC_ENCRYPTION_ENABLED": "no",
+            "SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED": "no",
+            "SPARK_SSL_ENABLED": "no",
+            "SPARK_USER": "spark",
+        },
+    )
+    plan.add_service(name=spark_worker_name, config=config)
